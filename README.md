@@ -7,3 +7,6 @@ To run you need python3 and pyqt4.
 python .\bin\app.py
 ```
 
+The current text layout is draw and was hacked in so probably doesn't scale very well at the moment but here is a screenshot of what it should look like:
+
+![Screenshot](https://cloud.githubusercontent.com/assets/13421296/23341108/7e0c523c-fc39-11e6-93f5-445c537a34c1.png)
