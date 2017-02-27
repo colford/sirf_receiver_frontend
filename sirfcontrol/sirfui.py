@@ -19,7 +19,7 @@ baud = 38400
 class SirfMeasuredTracker(QtGui.QWidget):
     def __init__(self):
         super(SirfMeasuredTracker, self).__init__()
-        self.width = 450
+        self.width = 470
         self.height = 350
         self.message = None
         self.cno = []
@@ -45,9 +45,9 @@ class SirfMeasuredTracker(QtGui.QWidget):
         qp.drawText( x, y, "SVID" )
         y += font_height + 15
         qp.drawText( x, y, "Azimuth" )
-        y += font_height + 15       
+        y += font_height + 21 
         qp.drawText( x, y, "Elevation" )
-        y += font_height + 15
+        y += font_height + 20
         qp.drawText( x, y, "(Re)Acquistion success" )
         y += font_height + 4
         qp.drawText( x, y, "Carrier phase vaild" )
@@ -65,9 +65,13 @@ class SirfMeasuredTracker(QtGui.QWidget):
         y += font_height + 4        
         qp.drawText( x, y, "Ephemeris data avail" )        
         qp.rotate(90)
-        x -= 110
+        x -= 120
         y = max_width + 24
         qp.drawText( -x, y, "Carrier to Noise (dB-Hz)" )
+        y = max_width - 24
+        qp.drawText( -x, y, "GPS Week No:" )
+        y = max_width
+        qp.drawText( -x, y, "GPS TOW (s):" )
     
     def drawLED(self,qp,x,y,height,on):
         if on:
@@ -78,6 +82,10 @@ class SirfMeasuredTracker(QtGui.QWidget):
     def drawData(self,qp):
         if self.message == None:
             return
+            
+        qp.drawText( 325, 83, str(self.message[1]))
+        qp.drawText( 325, 106, str(self.message[2]/100))
+        
         font_metrics = QWidget.fontMetrics(self)
         font_height = font_metrics.height()
         box_height = font_height/2+1
@@ -99,10 +107,10 @@ class SirfMeasuredTracker(QtGui.QWidget):
             index = (channels+4)+(12*channels)
             qp.drawText( x, y, str(self.message[index]))
             x += 29
-            qp.drawText( x, y, str(self.message[index+1]))
-            x += 29
-            qp.drawText( x, y, str(self.message[index+2]))
-            x += 29
+            qp.drawText( x, y, str(self.message[index+1]/(2/3)))
+            x += 35
+            qp.drawText( x, y, str(self.message[index+2]/2))
+            x += 35
             self.drawLED(qp,x,y,box_height,self.message[index+3] & 0x01)
             x += font_height + 4
             self.drawLED(qp,x,y,box_height,self.message[index+3] & 0x02)
