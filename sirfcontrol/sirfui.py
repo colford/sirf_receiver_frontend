@@ -69,6 +69,12 @@ class SirfMeasuredTracker(QtGui.QWidget):
         y = max_width + 24
         qp.drawText( -x, y, "Carrier to Noise (dB-Hz)" )
     
+    def drawLED(self,qp,x,y,height,on):
+        if on:
+            qp.fillRect( x, y-height, 5, height, QColor("green" ))
+        else:
+            qp.drawRect( x, y-height, 5, height ) 
+    
     def drawData(self,qp):
         if self.message == None:
             return
@@ -97,45 +103,21 @@ class SirfMeasuredTracker(QtGui.QWidget):
             x += 29
             qp.drawText( x, y, str(self.message[index+2]))
             x += 29
-            if self.message[index+3] & 0x01:
-                qp.fillRect( x, y-box_height, 5, box_height, QColor("green" ))
-            else:
-                qp.drawRect( x, y-box_height, 5, box_height )
+            self.drawLED(qp,x,y,box_height,self.message[index+3] & 0x01)
             x += font_height + 4
-            if self.message[index+3] & 0x02:
-                qp.fillRect( x, y-box_height, 5, box_height, QColor("green" ))
-            else:
-                qp.drawRect( x, y-box_height, 5, box_height )
+            self.drawLED(qp,x,y,box_height,self.message[index+3] & 0x02)
             x += font_height + 4
-            if self.message[index+3] & 0x04:
-                qp.fillRect( x, y-box_height, 5, box_height, QColor("green" ))
-            else:
-                qp.drawRect( x, y-box_height, 5, box_height )
+            self.drawLED(qp,x,y,box_height,self.message[index+3] & 0x04)
             x += font_height + 4
-            if self.message[index+3] & 0x08:
-                qp.fillRect( x, y-box_height, 5, box_height, QColor("green" ))
-            else:
-                qp.drawRect( x, y-box_height, 5, box_height )
+            self.drawLED(qp,x,y,box_height,self.message[index+3] & 0x08)
             x += font_height + 4
-            if self.message[index+3] & 0x10:
-                qp.fillRect( x, y-box_height, 5, box_height, QColor("green" ))
-            else:
-                qp.drawRect( x, y-box_height, 5, box_height )
+            self.drawLED(qp,x,y,box_height,self.message[index+3] & 0x10)
             x += font_height + 4
-            if self.message[index+3] & 0x20:
-                qp.fillRect( x, y-box_height, 5, box_height, QColor("green" ))
-            else:
-                qp.drawRect( x, y-box_height, 5, box_height )
+            self.drawLED(qp,x,y,box_height,self.message[index+3] & 0x20)
             x += font_height + 4
-            if self.message[index+3] & 0x40:
-                qp.fillRect( x, y-box_height, 5, box_height, QColor("green" ))
-            else:
-                qp.drawRect( x, y-box_height, 5, box_height )
+            self.drawLED(qp,x,y,box_height,self.message[index+3] & 0x40)
             x += font_height + 4
-            if self.message[index+3] & 0x80:
-                qp.fillRect( x, y-box_height, 5, box_height, QColor("green" ))
-            else:
-                qp.drawRect( x, y-box_height, 5, box_height )
+            self.drawLED(qp,x,y,box_height,self.message[index+3] & 0x80)
             x += font_height + 16
             scale = max(self.cno[channels])
             for i in range(0,len(self.cno[channels])):
@@ -156,16 +138,22 @@ class SirfMeasuredTracker(QtGui.QWidget):
         self.message = data.data
         self.repaint()
 
-class SirfMessageProcessor(QtCore.QObject):
-    def __init__(self):
+class SirfMessageProcessor(QThread):
+    def __init__(self,parent = None):
         super(SirfMessageProcessor, self).__init__()
         self.reader = SirfMessageReader(port,baud)
-        self.startTimer(100)
-        
-    def timerEvent(self,e):
-        self.message = self.reader.read_message()
-        if self.message.id == 4:
-            self.emit(SIGNAL("messageID4"), self.message)
+        self.exiting = False
+        self.start()
+    
+    def __del__(self):    
+        self.exiting = True
+        self.wait()    
+    
+    def run(self):
+        while not self.exiting:
+            self.message = self.reader.read_message()
+            if self.message.id == 4:
+                self.emit(SIGNAL("messageID4"), self.message)
 
 class Sirf(object):
     def __init__(self):
