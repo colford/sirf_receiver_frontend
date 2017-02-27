@@ -18,5 +18,6 @@ class SirfMessageReader(object):
     
     def read_message(self):
         return Message(self.com.read_message())
-            
         
+    def cold_start(self):
+        self.com.cold_start()

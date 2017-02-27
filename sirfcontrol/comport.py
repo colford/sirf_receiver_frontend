@@ -15,6 +15,14 @@ class Comport(object):
         self.timeout = timeout
         self.crc_mask = pow(2,15) - 1
         self.com = None
+        self.startbytes = bytearray(b'\xa0\xa2')
+        self.endbytes = bytearray(b'\xb0\xb3')
+        self.coldstartpayload = bytearray(b'\x80\xFF\xD7\x00\xF9\xFF\xBE\x52\x66\x00\x3A\xC5\x7A\x00\x01\x24\xF8\x00\x83\xD6\x00\x03\x9C\x0C\x0e')
+        self.coldstartmessage = self.startbytes + \
+                                    len(self.coldstartpayload).to_bytes(2,byteorder='big') + \
+                                    self.coldstartpayload + \
+                                    self.calc_crc(self.coldstartpayload).to_bytes(2,byteorder='big') + \
+                                    self.endbytes
     
     def isopen(self):
         return self.com != None
@@ -22,8 +30,11 @@ class Comport(object):
     def open(self):
         self.com = serial.Serial(self.port, self.baud, timeout=self.timeout)
         
+    def calc_crc(self,payload):
+        return ( sum(payload) & self.crc_mask )       
+        
     def check_crc(self,payload,crc):
-        return ( sum(payload) & self.crc_mask ) == crc
+        return self.calc_crc(payload) == crc
 
     def hunt_for(self,value):
         if ord(self.com.read(1)) == value:
@@ -47,3 +58,8 @@ class Comport(object):
                 if end == 0xB0B3:
                     if self.check_crc(payload,crc):
                         return payload
+                        
+    def cold_start(self):
+        # Wtire the cold start message
+        print(self.coldstartmessage)
+        print(self.com.write(self.coldstartmessage))

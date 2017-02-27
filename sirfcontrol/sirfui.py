@@ -22,6 +22,7 @@ class SirfMeasuredTracker(QtGui.QWidget):
         self.width = 470
         self.height = 350
         self.message = None
+        self.pre_message = None
         self.cno = []
         self.initUI()
         
@@ -80,7 +81,7 @@ class SirfMeasuredTracker(QtGui.QWidget):
             qp.drawRect( x, y-height, 5, height ) 
     
     def drawData(self,qp):
-        if self.message == None:
+        if self.message == None or self.message == self.pre_message:
             return
             
         qp.drawText( 325, 83, str(self.message[1]))
@@ -98,8 +99,9 @@ class SirfMeasuredTracker(QtGui.QWidget):
                 self.cno.append(deque(10*[0]*10,10*10))
 
         # Add in the new C/No data
-        for i in range(0,self.message[3]):
-            self.cno[i].append(self.message[(i+8)+(12*i)])
+        for c in range(0,self.message[3]):
+            for i in range(0,9): 
+                self.cno[c].append(self.message[8+i+(13*c)])
         
         for channels in range(0,self.message[3]):
             qp.setPen(QColor("black"))
@@ -137,6 +139,7 @@ class SirfMeasuredTracker(QtGui.QWidget):
                     qp.drawLine(x, y, x, y-int(box_height/scale*self.cno[channels][i]))
                 x += 2
             y += font_height + 2
+        self.pre_message = self.message
     
     def drawTracker(self,qp):
         self.drawHeaders(qp)
@@ -157,11 +160,29 @@ class SirfMessageProcessor(QThread):
         self.exiting = True
         self.wait()    
     
+    def coldStart(self):
+        self.reader.cold_start()
+    
     def run(self):
         while not self.exiting:
             self.message = self.reader.read_message()
             if self.message.id == 4:
                 self.emit(SIGNAL("messageID4"), self.message)
+
+class SirfControl(QtGui.QWidget):
+    def __init__(self, connection, parent=None):
+        super(SirfControl, self).__init__(parent)
+        self.connection = connection
+        self.coldstart = QtGui.QPushButton("Cold Start")
+        self.coldstart.clicked.connect(self.coldStartClicked)
+        layout = QtGui.QHBoxLayout()
+        layout.addWidget(self.coldstart)
+        self.setLayout(layout)
+        self.setWindowTitle('SiRF Control')
+        self.show()
+        
+    def coldStartClicked(self):
+        self.connection.coldStart()
 
 class Sirf(object):
     def __init__(self):
@@ -169,6 +190,7 @@ class Sirf(object):
         app = QtGui.QApplication(sys.argv)
         sirf_ui = SirfMeasuredTracker()
         sirf_processor = SirfMessageProcessor()
+        sirf_control = SirfControl(sirf_processor,sirf_ui)
         QtCore.QObject.connect(sirf_processor, SIGNAL("messageID4"), sirf_ui.newMessage)
         sirf_ui.show()
         app.exec_()
