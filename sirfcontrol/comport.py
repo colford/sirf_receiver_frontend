@@ -17,12 +17,24 @@ class Comport(object):
         self.com = None
         self.startbytes = bytearray(b'\xa0\xa2')
         self.endbytes = bytearray(b'\xb0\xb3')
-        self.coldstartpayload = bytearray(b'\x80\xFF\xD7\x00\xF9\xFF\xBE\x52\x66\x00\x3A\xC5\x7A\x00\x01\x24\xF8\x00\x83\xD6\x00\x03\x9C\x0C\x0e')
-        self.coldstartmessage = self.startbytes + \
-                                    len(self.coldstartpayload).to_bytes(2,byteorder='big') + \
-                                    self.coldstartpayload + \
-                                    self.calc_crc(self.coldstartpayload).to_bytes(2,byteorder='big') + \
-                                    self.endbytes
+        self.warm_payload = bytearray(b'\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0C\x02')
+        self.warm_message = self.startbytes + \
+                                len(self.warm_payload).to_bytes(2,byteorder='big') + \
+                                self.warm_payload + \
+                                self.calc_crc(self.warm_payload).to_bytes(2,byteorder='big') + \
+                                self.endbytes
+        self.coldstart_payload = bytearray(b'\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0C\x84')
+        self.coldstart_message = self.startbytes + \
+                                   len(self.coldstart_payload).to_bytes(2,byteorder='big') + \
+                                   self.coldstart_payload + \
+                                   self.calc_crc(self.coldstart_payload).to_bytes(2,byteorder='big') + \
+                                   self.endbytes
+        self.sw_poll_payload = bytearray(b'\x84\x00')
+        self.sw_poll_message = self.startbytes + \
+                                   len(self.sw_poll_payload).to_bytes(2,byteorder='big') + \
+                                   self.sw_poll_payload + \
+                                   self.calc_crc(self.sw_poll_payload).to_bytes(2,byteorder='big') + \
+                                   self.endbytes
     
     def isopen(self):
         return self.com != None
@@ -37,8 +49,8 @@ class Comport(object):
         return self.calc_crc(payload) == crc
 
     def hunt_for(self,value):
-        if ord(self.com.read(1)) == value:
-            return True
+        valstring = self.com.read(1)
+        return ( len(valstring) > 0 and ord(valstring) == value )
 
     def hunt_for_start(self):
         while 1:
@@ -61,5 +73,15 @@ class Comport(object):
                         
     def cold_start(self):
         # Wtire the cold start message
-        print(self.coldstartmessage)
-        print(self.com.write(self.coldstartmessage))
+        print(self.coldstart_message)
+        print(self.com.write(self.coldstart_message))
+        
+    def warm_start(self):
+        # Wtire the cold start message
+        print(self.warm_payload)
+        print(self.com.write(self.warm_payload))  
+        
+    def sw_poll(self):
+        # Wtire the cold start message
+        print(self.sw_poll_message)
+        print(self.com.write(self.sw_poll_message))

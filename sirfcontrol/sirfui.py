@@ -162,6 +162,12 @@ class SirfMessageProcessor(QThread):
     
     def coldStart(self):
         self.reader.cold_start()
+        
+    def warmStart(self):
+        self.reader.re_start()
+        
+    def swPoll(self):
+        self.reader.sw_poll()
     
     def run(self):
         while not self.exiting:
@@ -175,14 +181,23 @@ class SirfControl(QtGui.QWidget):
         self.connection = connection
         self.coldstart = QtGui.QPushButton("Cold Start")
         self.coldstart.clicked.connect(self.coldStartClicked)
-        layout = QtGui.QHBoxLayout()
+        self.restart = QtGui.QPushButton("Warm Start")
+        self.restart.clicked.connect(self.warmStartClicked)
+        layout = QtGui.QVBoxLayout()
         layout.addWidget(self.coldstart)
+        layout.addWidget(self.restart)
         self.setLayout(layout)
         self.setWindowTitle('SiRF Control')
         self.show()
         
     def coldStartClicked(self):
         self.connection.coldStart()
+        
+    def warmStartClicked(self):
+        self.connection.warmStart()
+        
+    def swPollClicked(self):
+        self.connection.swPoll()
 
 class Sirf(object):
     def __init__(self):

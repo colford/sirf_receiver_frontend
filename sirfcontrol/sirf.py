@@ -21,3 +21,9 @@ class SirfMessageReader(object):
         
     def cold_start(self):
         self.com.cold_start()
+        
+    def warm_start(self):
+        self.com.warm_start()
+        
+    def sw_poll(self):
+        self.com.sw_poll()
