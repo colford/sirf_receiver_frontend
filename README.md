@@ -9,4 +9,4 @@ python .\bin\app.py
 
 The current text layout is draw and was hacked in so probably doesn't scale very well at the moment but below is a screenshot of what it should look like. Carrier to noise scrolls right to left as new measurements are read and has a history over the last 10 seconds. The red C/No is when the C/No is zero, green is when there is a positive reading other than zero.
 
-![Screenshot](https://cloud.githubusercontent.com/assets/13421296/23341108/7e0c523c-fc39-11e6-93f5-445c537a34c1.png)
+![Screenshot](https://cloud.githubusercontent.com/assets/13421296/23379214/018024aa-fd2e-11e6-8b9f-2176f5e38be4.JPG)
