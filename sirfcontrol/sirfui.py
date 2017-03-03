@@ -164,7 +164,7 @@ class SirfMessageProcessor(QThread):
         self.reader.cold_start()
         
     def warmStart(self):
-        self.reader.re_start()
+        self.reader.warm_start()
         
     def swPoll(self):
         self.reader.sw_poll()
@@ -173,7 +173,7 @@ class SirfMessageProcessor(QThread):
         while not self.exiting:
             self.message = self.reader.read_message()
             if self.message.id == 4:
-                self.emit(SIGNAL("messageID4"), self.message)
+                self.emit(SIGNAL("messageID4"), self.message.decoded)
 
 class SirfControl(QtGui.QWidget):
     def __init__(self, connection, parent=None):
@@ -205,7 +205,7 @@ class Sirf(object):
         app = QtGui.QApplication(sys.argv)
         sirf_ui = SirfMeasuredTracker()
         sirf_processor = SirfMessageProcessor()
-        sirf_control = SirfControl(sirf_processor,sirf_ui)
+        sirf_control = SirfControl(sirf_processor)
         QtCore.QObject.connect(sirf_processor, SIGNAL("messageID4"), sirf_ui.newMessage)
         sirf_ui.show()
         app.exec_()
