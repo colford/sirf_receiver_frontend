@@ -166,6 +166,9 @@ class SirfMessageProcessor(QThread):
     def warmStart(self):
         self.reader.warm_start()
         
+    def hotStart(self):
+        self.reader.hot_start()
+        
     def swPoll(self):
         self.reader.sw_poll()
     
@@ -179,13 +182,19 @@ class SirfControl(QtGui.QWidget):
     def __init__(self, connection, parent=None):
         super(SirfControl, self).__init__(parent)
         self.connection = connection
-        self.coldstart = QtGui.QPushButton("Cold Start")
+        self.swversion = QtGui.QPushButton("Software version")
+        self.swversion.clicked.connect(self.swPollClicked)
+        self.coldstart = QtGui.QPushButton("Cold start")
         self.coldstart.clicked.connect(self.coldStartClicked)
-        self.restart = QtGui.QPushButton("Warm Start")
-        self.restart.clicked.connect(self.warmStartClicked)
+        self.warmstart = QtGui.QPushButton("Warm start")
+        self.warmstart.clicked.connect(self.warmStartClicked)
+        self.hotstart = QtGui.QPushButton("Hot start")
+        self.hotstart.clicked.connect(self.hotStartClicked)
         layout = QtGui.QVBoxLayout()
+        layout.addWidget(self.swversion)
         layout.addWidget(self.coldstart)
-        layout.addWidget(self.restart)
+        layout.addWidget(self.warmstart)
+        layout.addWidget(self.hotstart)
         self.setLayout(layout)
         self.setWindowTitle('SiRF Control')
         self.show()
@@ -195,6 +204,9 @@ class SirfControl(QtGui.QWidget):
         
     def warmStartClicked(self):
         self.connection.warmStart()
+    
+    def hotStartClicked(self):
+        self.connection.hotStart()
         
     def swPollClicked(self):
         self.connection.swPoll()

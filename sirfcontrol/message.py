@@ -8,17 +8,17 @@ Created on Thu Feb 23 18:51:20 2017
 import struct
 
 # How to decode the payload from the SiRF binary message
-# ID, decription, fixed length part, number_of_subids, [repetion|subid], subid1, subid2...]
+# ID, Description, Class-Handler
 message_decoder = {
     0x01 : ["Reference Navigation Data",""],
-    0x02 : ["Measured Navigation Data",""],
+    0x02 : ["Measured Navigation Data","Message_02"],
     0x03 : ["True Tracker Data",""],
     0x04 : ["Measured Tracking Data","Message_04"],
     0x05 : ["Raw Track Data",""],
-    0x06 : ["SW Version",""],
-    0x07 : ["Clock Status",""],
+    0x06 : ["SW Version","Message_06"],
+    0x07 : ["Clock Status","Message_07"],
     0x08 : ["50 BPS Subframe Data",""],
-    0x09 : ["CPU Throughput",""],
+    0x09 : ["CPU Throughput","Message_09"],
     0x0A : ["Error ID",""],
     0x0B : ["Command Acknowledgment",""],
     0x0C : ["Command NAcknowledgment",""],
@@ -47,7 +47,8 @@ message_decoder = {
     0x38 : ["Extended Ephemeris Data",""],
     0x3F : ["Test Mode Output",""],
     0x40 : ["Auxilary Time Management",""],
-    0x4B : ["Ack/Nack/Error Notification", ""],
+    0x4B : ["Ack/Nack/Error Notification", "Message_4B"],
+    0x5D : ["TCX0 Learning output response", "Message_5D"],
     0xE1 : ["SiRF internal message",""],
     0xFF : ["Development Data",""]
 }
@@ -92,14 +93,15 @@ class Message_06(object):
         self.message = message
         self.fixed = ">BBB"
         self.data = None
-        self.decode(message)
+        self.decode()
         
     def decode(self):
         # Read the fixed part of the message
         self.data = struct.unpack_from(self.fixed, self.message, 0)
         ver_length = self.data[1]
-        self.sirf_version = self.message[3:ver_length+3]
-        self.customer_version = self.message[3+ver_length+1:-1]
+        self.sirf_version = self.message[3:ver_length+3-1]
+        self.customer_version = self.message[3+ver_length:-1]
+        print(self.sirf_version,self.customer_version)
         
 class Message_07(object):
     def __init__(self, mid, description, message):
@@ -152,6 +154,46 @@ class Message_4B(object):
             self.data += struct.unpack_from(self.sub2, self.message, offset)
         else:
             print("Message 0x4B error unknown subid:", self.subid)
+
+class Message_5D(object):
+    def __init__(self, mid, description, message):
+        self.id = mid
+        self.message = message
+        self.fixed = ">BB"
+        self.submap = {
+            0x01: "BBBBiHHBBBB",
+            0x02: "IhhhHHHBbBB",
+            0x04: "IHBBBBB",
+            0x05: "IIIHHHH",
+            0x06: "IIIHH",
+            0x07: "IIIIIHHIIIiIHH",
+            0x09: "BBBII",
+            0x0A: "BBBII",
+            0x0B: "BBIIiIHH",
+            0x0C: "IIIHHHHHHHHBBI",
+            0x0D: "IIIIIIHiiH"
+        }
+        self.data = None
+        self.decode()
+        
+    def decode(self):
+        # Keep track of where we are in the message
+        offset = 0
+        
+        # Read the fixed part of the message
+        read = struct.calcsize(self.fixed)
+        self.data = struct.unpack_from(self.fixed, self.message, offset)
+        self.subid = self.data[1]
+        print(self.subid)
+        print(self.message)
+        offset += read
+        
+        # Consume the subtype part
+        if self.subid in self.submap:
+            self.data += struct.unpack_from(self.submap[self.subid], self.message, offset)
+        else:
+            print("Message 0x4B error unknown subid:", self.subid)
+
 
 class Message(object):
     def __init__(self, message):

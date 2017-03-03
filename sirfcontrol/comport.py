@@ -29,6 +29,12 @@ class Comport(object):
                                    self.coldstart_payload + \
                                    self.calc_crc(self.coldstart_payload).to_bytes(2,byteorder='big') + \
                                    self.endbytes
+        self.hotstart_payload = bytearray(b'\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0C\x00')
+        self.hotstart_message = self.startbytes + \
+                                   len(self.hotstart_payload).to_bytes(2,byteorder='big') + \
+                                   self.hotstart_payload + \
+                                   self.calc_crc(self.hotstart_payload).to_bytes(2,byteorder='big') + \
+                                   self.endbytes                                 
         self.sw_poll_payload = bytearray(b'\x84\x00')
         self.sw_poll_message = self.startbytes + \
                                    len(self.sw_poll_payload).to_bytes(2,byteorder='big') + \
@@ -77,11 +83,16 @@ class Comport(object):
         print(self.com.write(self.coldstart_message))
         
     def warm_start(self):
-        # Wtire the cold start message
+        # Wtire the warm start message
         print(self.warm_payload)
-        print(self.com.write(self.warm_payload))  
+        print(self.com.write(self.warm_payload))
+        
+    def hot_start(self):
+        # Wtire the hot start message
+        print(self.hotstart_payload)
+        print(self.com.write(self.hotstart_payload))
         
     def sw_poll(self):
-        # Wtire the cold start message
+        # Poll for the software version
         print(self.sw_poll_message)
         print(self.com.write(self.sw_poll_message))
